@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
 import './App.css';
 import _ from 'lodash';
+import 'bootstrap/dist/css/bootstrap.css';
+import { Table } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlay } from '@fortawesome/free-solid-svg-icons'
 
 class App extends Component {
   constructor(props) {
@@ -29,25 +33,34 @@ class App extends Component {
   renderList() {
     const { songs } = this.state;
     return (
-      <ul className="list-group list-group-flush">
+      <tbody>
         {songs.map((s, index) => {
           return (
-            <div key={index}>
-              <button type="button" className="list-group-item list-group-item-action">{songs[index].song}</button>
-            </div>
+            <tr>
+              <td>{songs[index].artist}</td>
+              <td>{songs[index].album}</td>
+              <td>{songs[index].song}</td>
+              <td><FontAwesomeIcon icon={faPlay} /></td>
+            </tr>
           )
         })}
-      </ul>
+      </tbody>
     );
   };
 
   render() {
     return (
-      <div>
-        <div>
-          { this.state.isLoaded ? this.renderList() : null }
-        </div>
-      </div>
+      <Table striped bordered hover variant="dark">
+        <thead>
+          <tr>
+            <th>Artist</th>
+            <th>Album</th>
+            <th>Song</th>
+            <th></th>
+          </tr>
+        </thead>
+        { this.state.isLoaded ? this.renderList() : null }
+      </Table>
     );
   }
 }
