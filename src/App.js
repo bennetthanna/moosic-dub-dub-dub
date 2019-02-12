@@ -55,7 +55,11 @@ class App extends Component {
     fetch('http://52.5.208.6:3000', params)
       .then(res => res.json())
       .then(res => {
-        this.setState({ songUrl: res.url, selectedSongIndex: index });
+        this.setState({ songUrl: res.url, selectedSongIndex: index }, () => {
+          this.refs.audio.pause();
+          this.refs.audio.load();
+          this.refs.audio.play();
+        });
       })
       .catch(err => {
         alert(err);
@@ -84,7 +88,7 @@ class App extends Component {
   renderAudio() {
     const { songUrl } = this.state;
     return (
-      <audio controls autoPlay>
+      <audio controls autoPlay ref="audio">
         <source src={songUrl} type="audio/mp4"></source>
         Your browser does not support the audio element.
       </audio>
