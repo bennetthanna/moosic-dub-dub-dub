@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import { Table, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
-import _ from 'lodash';
+import get from 'lodash/get';
 
 class App extends Component {
   constructor(props) {
@@ -12,7 +12,7 @@ class App extends Component {
 
     this.state = {
       isLoaded: false,
-      isSongSelected: false,
+      songUrl: null,
       selectedSongIndex: null,
       songs: null
     }
@@ -21,7 +21,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    fetch('http://3.88.74.36:3000')
+    fetch('http://52.5.208.6:3000')
       .then(res => {
         return res.json();
       })
@@ -35,7 +35,31 @@ class App extends Component {
 
   selectSong(event, index) {
     event.preventDefault();
-    this.setState({ selectedSongIndex: index, isSongSelected: true });
+    const { songs } = this.state;
+    const selectedSong = songs[index];
+    var songKey = get(selectedSong, 'artist') ? `${selectedSong.artist}/` : '';
+    songKey += get(selectedSong, 'album') ? `${selectedSong.album}/` : '';
+    songKey += get(selectedSong, 'song') ? selectedSong.song : '';
+
+    const params = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: songKey
+      })
+    };
+
+    fetch('http://52.5.208.6:3000', params)
+      .then(res => res.json())
+      .then(res => {
+        this.setState({ songUrl: res.url, selectedSongIndex: index });
+      })
+      .catch(err => {
+        alert(err);
+      });
   }
 
   renderList() {
@@ -58,26 +82,20 @@ class App extends Component {
   };
 
   renderAudio() {
-    const { songs, selectedSongIndex } = this.state;
-    const selectedSong = songs[selectedSongIndex];
-    var songPath = _.get(selectedSong, 'artist') ? `${selectedSong.artist}/` : '';
-    songPath += _.get(selectedSong, 'album') ? `${selectedSong.album}/` : '';
-    songPath += _.get(selectedSong, 'song') ? selectedSong.song : '';
-    const s3Path = `https://s3.amazonaws.com/bucket-o-dub-dub-dub/${songPath}`;
+    const { songUrl } = this.state;
     return (
-      <div>
-        <audio controls>
-          <source src={s3Path} type="audio/mp4"></source>
-          Your browser does not support the audio element.
-        </audio>
-      </div>
+      <audio controls autoPlay>
+        <source src={songUrl} type="audio/mp4"></source>
+        Your browser does not support the audio element.
+      </audio>
     );
   }
 
   render() {
+    const { songUrl } = this.state;
     return (
       <div>
-      { this.state.isSongSelected ? this.renderAudio() : null }
+        { songUrl ? this.renderAudio() : null }
       <div>
         <Table striped bordered hover variant="dark">
           <thead>
