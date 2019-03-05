@@ -1,119 +1,32 @@
 import React, { Component } from 'react';
-import './App.css';
-import 'bootstrap/dist/css/bootstrap.css';
-import { Table, Button } from 'react-bootstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlay } from '@fortawesome/free-solid-svg-icons';
-import get from 'lodash/get';
+import LoggedIn from './LoggedIn';
+import Login from './Login';
 
 class App extends Component {
   constructor(props) {
     super(props);
-
     this.state = {
-      isLoaded: false,
-      songUrl: null,
-      selectedSongIndex: null,
-      songs: null
+      isLoggedIn: false
     }
-
-    this.selectSong = this.selectSong.bind(this);
+    this.logIn = this.logIn.bind(this);
+    this.logOut = this.logOut.bind(this);
   }
 
-  componentDidMount() {
-    fetch('http://52.5.208.6:3000')
-      .then(res => {
-        return res.json();
-      })
-      .then(jsonData => {
-        this.setState({ songs: jsonData, isLoaded: true });
-      })
-      .catch(err => {
-        alert(err);
-      });
+  logIn() {
+    this.setState({ isLoggedIn: true });
   }
 
-  selectSong(event, index) {
-    event.preventDefault();
-    const { songs } = this.state;
-    const selectedSong = songs[index];
-    var songKey = get(selectedSong, 'artist') ? `${selectedSong.artist}/` : '';
-    songKey += get(selectedSong, 'album') ? `${selectedSong.album}/` : '';
-    songKey += get(selectedSong, 'song') ? selectedSong.song : '';
-
-    const params = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        key: songKey
-      })
-    };
-
-    fetch('http://52.5.208.6:3000', params)
-      .then(res => res.json())
-      .then(res => {
-        this.setState({ songUrl: res.url, selectedSongIndex: index }, () => {
-          this.refs.audio.pause();
-          this.refs.audio.load();
-          this.refs.audio.play();
-        });
-      })
-      .catch(err => {
-        alert(err);
-      });
-  }
-
-  renderList() {
-    const { songs, selectedSongIndex } = this.state;
-    const selectSong = this.selectSong;
-    return (
-      <tbody>
-        {songs.map((s, index) => {
-          return (
-            <tr key={index}>
-              <td>{songs[index].artist}</td>
-              <td>{songs[index].album}</td>
-              <td>{songs[index].song}</td>
-              <td><Button variant={selectedSongIndex === index ? "info" : "outline-info"} onClick={(event) => selectSong(event, index)}><FontAwesomeIcon icon={faPlay} /></Button></td>
-            </tr>
-          )
-        })}
-      </tbody>
-    );
-  };
-
-  renderAudio() {
-    const { songUrl } = this.state;
-    return (
-      <audio controls autoPlay ref="audio">
-        <source src={songUrl} type="audio/mp4"></source>
-        Your browser does not support the audio element.
-      </audio>
-    );
+  logOut() {
+    this.setState({ isLoggedIn: false });
   }
 
   render() {
-    const { songUrl } = this.state;
+    const isLoggedIn = this.state.isLoggedIn;
+    const logIn = this.logIn;
+    const logOut = this.logOut;
+
     return (
-      <div>
-        { songUrl ? this.renderAudio() : null }
-      <div>
-        <Table striped bordered hover variant="dark">
-          <thead>
-            <tr>
-              <th>Artist</th>
-              <th>Album</th>
-              <th>Song</th>
-              <th>Play That Funky Moosic</th>
-            </tr>
-          </thead>
-          { this.state.isLoaded ? this.renderList() : null }
-        </Table>
-      </div>
-      </div>
+      <div>{ isLoggedIn ? <LoggedIn logOut={logOut}/> : <Login logIn={logIn}/> }</div>
     );
   }
 }
