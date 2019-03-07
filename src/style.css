@@ -55,3 +55,25 @@ button:hover {
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+#moosic-table {
+  width: 50%;
+  table-layout: fixed;
+  margin: 0 auto;
+}
+
+#breadcrumbs {
+  width: 50%;
+  margin: 0 auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+ol {
+ background-color: #343a40 !important;
+}
+
+#breadcrumb-link {
+  color: #17a2b8;
+  text-decoration: none;
+}

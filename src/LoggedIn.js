@@ -7,6 +7,11 @@ import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import firebase from './firebase.js';
 import includes from 'lodash/includes';
 
+const GENRES = 'genres';
+const ARTISTS = 'artists';
+const ALBUMS = 'albums';
+const SONGS = 'songs';
+
 class LoggedIn extends Component {
   constructor(props) {
     super(props);
@@ -18,7 +23,7 @@ class LoggedIn extends Component {
       selectedArtist: null,
       selectedAlbum: null,
       selectedSongIndex: null,
-      selectedBreadcrumb: 'genres',
+      selectedBreadcrumb: GENRES,
       genres: null,
       artists: null,
       albums: null,
@@ -31,6 +36,7 @@ class LoggedIn extends Component {
     this.selectSong = this.selectSong.bind(this);
     this.logOut = this.logOut.bind(this);
     this.selectBreadcrumb = this.selectBreadcrumb.bind(this);
+    this.renderBreadcrumbs = this.renderBreadcrumbs.bind(this);
   }
 
   componentDidMount() {
@@ -87,7 +93,7 @@ class LoggedIn extends Component {
     fetch(`http://localhost:3000/artists/for/genre?genre=${selectedGenre}`)
       .then(res => res.json())
       .then(res => {
-        this.setState({ artists: res, selectedGenre, selectedBreadcrumb: 'artists' });
+        this.setState({ artists: res, selectedGenre, selectedBreadcrumb: ARTISTS });
       })
       .catch(err => {
         alert(err);
@@ -102,7 +108,7 @@ class LoggedIn extends Component {
     fetch(`http://localhost:3000/albums/for/artist?artist=${selectedArtist}`)
       .then(res => res.json())
       .then(res => {
-        this.setState({ albums: res, selectedArtist, selectedBreadcrumb: 'albums' });
+        this.setState({ albums: res, selectedArtist, selectedBreadcrumb: ALBUMS });
       })
       .catch(err => {
         alert(err);
@@ -117,7 +123,7 @@ class LoggedIn extends Component {
     fetch(`http://localhost:3000/songs/for/album?album=${selectedAlbum}`)
       .then(res => res.json())
       .then(res => {
-        this.setState({ songs: res, selectedAlbum, selectedBreadcrumb: 'songs' });
+        this.setState({ songs: res, selectedAlbum, selectedBreadcrumb: SONGS });
       })
       .catch(err => {
         alert(err);
@@ -151,13 +157,13 @@ class LoggedIn extends Component {
 
   renderData() {
     switch(this.state.selectedBreadcrumb) {
-      case('genres'):
+      case(GENRES):
         return this.renderGenres();
-      case('artists'):
+      case(ARTISTS):
         return this.renderArtists();
-      case('albums'):
+      case(ALBUMS):
         return this.renderAlbums();
-      case('songs'):
+      case(SONGS):
         return this.renderSongs();
       default:
         return this.renderGenres();
@@ -169,10 +175,10 @@ class LoggedIn extends Component {
     const selectGenre = this.selectGenre;
 
     return (
-      <Table striped bordered hover variant="dark">
+      <Table id="moosic-table" bsPrefix="table table-dark table-striped table-bordered table-hover">
         <thead>
           <tr>
-            <th>Genre</th>
+            <th>Genres</th>
           </tr>
         </thead>
         <tbody>
@@ -193,10 +199,10 @@ class LoggedIn extends Component {
     const selectArtist = this.selectArtist;
 
     return (
-      <Table striped bordered hover variant="dark">
+      <Table id="moosic-table" bsPrefix="table table-dark table-striped table-bordered table-hover">
         <thead>
           <tr>
-            <th>Artist</th>
+            <th>Artists</th>
           </tr>
         </thead>
         <tbody>
@@ -217,10 +223,10 @@ class LoggedIn extends Component {
     const selectAlbum = this.selectAlbum;
 
     return (
-      <Table striped bordered hover variant="dark">
+      <Table id="moosic-table" bsPrefix="table table-dark table-striped table-bordered table-hover">
         <thead>
           <tr>
-            <th>Album</th>
+            <th>Albums</th>
           </tr>
         </thead>
         <tbody>
@@ -241,10 +247,10 @@ class LoggedIn extends Component {
     const selectSong = this.selectSong;
 
     return (
-      <Table striped bordered hover variant="dark">
+      <Table id="moosic-table" bsPrefix="table table-dark table-striped table-bordered table-hover">
         <thead>
           <tr>
-            <th>Song</th>
+            <th>Songs</th>
             <th>Play That Funky Moosic</th>
           </tr>
         </thead>
@@ -267,12 +273,25 @@ class LoggedIn extends Component {
     const selectBreadcrumb = this.selectBreadcrumb;
 
     return (
-      <Breadcrumb>
-        { genres && includes(['genres', 'artists', 'albums', 'songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'genres')}>Genres</Breadcrumb.Item> : null }
-        { artists && includes(['artists', 'albums', 'songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'artists')}>Artists</Breadcrumb.Item> : null }
-        { albums && includes(['albums', 'songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'albums')}>Albums</Breadcrumb.Item> : null }
-        { songs && includes(['songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'songs')}>Songs</Breadcrumb.Item> : null }
+      <Breadcrumb id="breadcrumbs">
+        { genres && includes([GENRES, ARTISTS, ALBUMS, SONGS], selectedBreadcrumb) ? <Breadcrumb.Item id="breadcrumb-link" onClick={(event) => selectBreadcrumb(event, GENRES)}>Genres</Breadcrumb.Item> : null }
+        { artists && includes([ARTISTS, ALBUMS, SONGS], selectedBreadcrumb) ? <Breadcrumb.Item id="breadcrumb-link" onClick={(event) => selectBreadcrumb(event, ARTISTS)}>Artists</Breadcrumb.Item> : null }
+        { albums && includes([ALBUMS, SONGS], selectedBreadcrumb) ? <Breadcrumb.Item id="breadcrumb-link" onClick={(event) => selectBreadcrumb(event, ALBUMS)}>Albums</Breadcrumb.Item> : null }
+        { songs && selectedBreadcrumb === SONGS ? <Breadcrumb.Item id="breadcrumb-link" onClick={(event) => selectBreadcrumb(event, SONGS)}>Songs</Breadcrumb.Item> : null }
       </Breadcrumb>
+    )
+  }
+
+  renderStuff() {
+    const renderBreadcrumbs = this.renderBreadcrumbs;
+    return (
+      <Table id="moosic-table" bsPrefix="table table-dark table-striped table-bordered table-hover">
+        <thead>
+          <tr>
+            { renderBreadcrumbs() }
+          </tr>
+        </thead>
+      </Table>
     )
   }
 

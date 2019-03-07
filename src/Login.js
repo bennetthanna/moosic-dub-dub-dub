@@ -4,6 +4,7 @@ import './style.css';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fab } from '@fortawesome/free-brands-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button } from 'react-bootstrap';
 
 library.add(fab);
 
@@ -36,7 +37,7 @@ class Login extends Component {
           <p>Log In</p>
         </div>
         <form>
-          <button id="signInWithGoogle" onClick={this.signInWithGoogle}><FontAwesomeIcon className="icon" icon={['fab', 'google']} />Sign In With Google</button>
+          <Button variant="info" id="signInWithGoogle" onClick={this.signInWithGoogle}><FontAwesomeIcon className="icon" icon={['fab', 'google']} />Sign In With Google</Button>
         </form>
       </div>
     </div>
