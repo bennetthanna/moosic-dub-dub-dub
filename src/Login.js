@@ -20,9 +20,10 @@ class Login extends Component {
     e.preventDefault();
     const googleProvider = new firebase.auth.GoogleAuthProvider();
     firebase.auth().signInWithPopup(googleProvider)
-      .then(function(result) {
+      .then(result => {
         logIn();
-      }).catch(error => {
+      })
+      .catch(error => {
         alert(`ERROR: ${error}`);
       });
   }

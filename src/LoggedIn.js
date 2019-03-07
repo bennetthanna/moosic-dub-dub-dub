@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import './style.css';
 import 'bootstrap/dist/css/bootstrap.css';
-import { Table, Button } from 'react-bootstrap';
+import { Table, Button, Breadcrumb } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
+import firebase from './firebase.js';
+import _ from 'lodash';
 
 class LoggedIn extends Component {
   constructor(props) {
@@ -13,29 +15,23 @@ class LoggedIn extends Component {
       isLoaded: false,
       songUrl: null,
       selectedSongIndex: null,
-      songs: null
+      selectedGenre: null,
+      songs: null,
+      genres: null,
+      artists: null,
+      albums: null,
+      selectedBreadcrumb: 'genres'
     }
 
     this.selectSong = this.selectSong.bind(this);
+    this.selectGenre = this.selectGenre.bind(this);
+    this.logOut = this.logOut.bind(this);
+    this.selectedBreadcrumb = this.selectedBreadcrumb.bind(this);
+    this.renderData = this.renderData.bind(this);
   }
 
   componentDidMount() {
-    fetch('http://52.5.208.6:3000')
-      .then(res => {
-        return res.json();
-      })
-      .then(jsonData => {
-        this.setState({ songs: jsonData, isLoaded: true });
-      })
-      .catch(err => {
-        alert(err);
-      });
-  }
-
-  selectSong(event, index) {
-    event.preventDefault();
-    const { songs } = this.state;
-    const selectedSong = songs[index];
+    const user = firebase.auth().currentUser;
 
     const params = {
       method: 'POST',
@@ -44,11 +40,51 @@ class LoggedIn extends Component {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        key: `${selectedSong.genre}/${selectedSong.artist}/${selectedSong.album}/${selectedSong.song}`
+        name: user.displayName,
+        email: user.email,
+        id: user.uid
       })
     };
 
-    fetch('http://52.5.208.6:3000', params)
+    fetch('http://localhost:3000/save-user', params)
+      .then(res => res.json())
+      .then(res => {
+        console.log(res);
+      })
+      .catch(err => {
+        alert(err);
+      });
+
+    fetch('http://localhost:3000/genres')
+      .then(res => {
+        return res.json();
+      })
+      .then(jsonData => {
+        this.setState({ genres: jsonData, isLoaded: true });
+      })
+      .catch(err => {
+        alert(err);
+      });
+  }
+
+  logOut(event) {
+    const logOut = this.props.logOut;
+    event.preventDefault();
+    firebase.auth().signOut()
+      .then(user => {
+        logOut();
+      })
+      .catch(error => {
+        alert(`ERROR: ${error}`);
+      });
+  }
+
+  selectSong(event, index) {
+    event.preventDefault();
+    const { songs } = this.state;
+    const selectedSong = songs[index];
+
+    fetch(`http://localhost:3000/song?song=${selectedSong.song}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ songUrl: res.url, selectedSongIndex: index }, () => {
@@ -60,6 +96,42 @@ class LoggedIn extends Component {
       .catch(err => {
         alert(err);
       });
+  }
+
+  selectGenre(event, index) {
+    event.preventDefault();
+    const { genres } = this.state;
+    const selectedGenre = genres[index];
+
+    fetch(`http://localhost:3000/artists/for/genre?genre=${selectedGenre}`)
+      .then(res => res.json())
+      .then(res => {
+        this.setState({ artists: res, selectedGenre: genres[index] });
+        console.log(this.state);
+      })
+      .catch(err => {
+        alert(err);
+      });
+  }
+
+  selectBreadcrumb(event, breadcrumb) {
+    event.preventDefault();
+    this.setState({ selectedBreadcrumb: breadcrumb });
+  }
+
+  renderData() {
+    switch(this.state.selectedBreadcrumb) {
+      case('genres'):
+        return this.renderGenres();
+      case('artists'):
+        break;
+      case('albums'):
+        break;
+      case('songs'):
+        break;
+      default:
+        return this.renderGenres();
+    }
   }
 
   renderList() {
@@ -82,6 +154,39 @@ class LoggedIn extends Component {
     );
   };
 
+  renderGenres() {
+    const { genres } = this.state;
+    const selectGenre = this.selectGenre;
+
+    return (
+      <Table striped bordered hover variant="dark">
+        <tbody>
+          {genres.map((genre, index) => {
+          return (
+            <tr key={index}>
+              <td><Button variant="info" onClick={(event) => selectGenre(event, index)}>{genre}</Button></td>
+            </tr>
+          )
+          })}
+        </tbody>
+      </Table>
+      );
+  };
+
+  renderBreadcrumbs() {
+    const { genres, artists, albums, songs } = this.state;
+    const selectBreadcrumb = this.selectBreadcrumb;
+
+    return (
+      <Breadcrumb>
+        { genres ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'genres')}>Genres</Breadcrumb.Item> : null }
+        { artists ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'artists')}>Artists</Breadcrumb.Item> : null }
+        { albums ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'albums')}>Albums</Breadcrumb.Item> : null }
+        { songs ? <Breadcrumb.Item>Songs</Breadcrumb.Item> : null }
+      </Breadcrumb>
+    )
+  }
+
   renderAudio() {
     const { songUrl } = this.state;
     return (
@@ -93,24 +198,12 @@ class LoggedIn extends Component {
   }
 
   render() {
-    const { songUrl } = this.state;
+    const { songUrl, genres, artists, albums, songs } = this.state;
     return (
       <div>
         { songUrl ? this.renderAudio() : null }
-      <div>
-        <Table striped bordered hover variant="dark">
-          <thead>
-            <tr>
-              <th>Genre</th>
-              <th>Artist</th>
-              <th>Album</th>
-              <th>Song</th>
-              <th>Play That Funky Moosic</th>
-            </tr>
-          </thead>
-          { this.state.isLoaded ? this.renderList() : null }
-        </Table>
-      </div>
+        { this.state.isLoaded ? this.renderBreadcrumbs() : null }
+        { this.state.isLoaded ? this.renderData() : null }
       </div>
     );
   }
