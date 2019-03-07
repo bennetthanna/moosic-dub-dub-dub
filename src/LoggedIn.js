@@ -5,7 +5,7 @@ import { Table, Button, Breadcrumb } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import firebase from './firebase.js';
-import _ from 'lodash';
+import includes from 'lodash/includes';
 
 class LoggedIn extends Component {
   constructor(props) {
@@ -14,20 +14,23 @@ class LoggedIn extends Component {
     this.state = {
       isLoaded: false,
       songUrl: null,
-      selectedSongIndex: null,
       selectedGenre: null,
-      songs: null,
+      selectedArtist: null,
+      selectedAlbum: null,
+      selectedSongIndex: null,
+      selectedBreadcrumb: 'genres',
       genres: null,
       artists: null,
       albums: null,
-      selectedBreadcrumb: 'genres'
+      songs: null
     }
 
-    this.selectSong = this.selectSong.bind(this);
     this.selectGenre = this.selectGenre.bind(this);
+    this.selectArtist = this.selectArtist.bind(this);
+    this.selectAlbum = this.selectAlbum.bind(this);
+    this.selectSong = this.selectSong.bind(this);
     this.logOut = this.logOut.bind(this);
-    this.selectedBreadcrumb = this.selectedBreadcrumb.bind(this);
-    this.renderData = this.renderData.bind(this);
+    this.selectBreadcrumb = this.selectBreadcrumb.bind(this);
   }
 
   componentDidMount() {
@@ -48,9 +51,6 @@ class LoggedIn extends Component {
 
     fetch('http://localhost:3000/save-user', params)
       .then(res => res.json())
-      .then(res => {
-        console.log(res);
-      })
       .catch(err => {
         alert(err);
       });
@@ -79,25 +79,6 @@ class LoggedIn extends Component {
       });
   }
 
-  selectSong(event, index) {
-    event.preventDefault();
-    const { songs } = this.state;
-    const selectedSong = songs[index];
-
-    fetch(`http://localhost:3000/song?song=${selectedSong.song}`)
-      .then(res => res.json())
-      .then(res => {
-        this.setState({ songUrl: res.url, selectedSongIndex: index }, () => {
-          this.refs.audio.pause();
-          this.refs.audio.load();
-          this.refs.audio.play();
-        });
-      })
-      .catch(err => {
-        alert(err);
-      });
-  }
-
   selectGenre(event, index) {
     event.preventDefault();
     const { genres } = this.state;
@@ -106,8 +87,57 @@ class LoggedIn extends Component {
     fetch(`http://localhost:3000/artists/for/genre?genre=${selectedGenre}`)
       .then(res => res.json())
       .then(res => {
-        this.setState({ artists: res, selectedGenre: genres[index] });
-        console.log(this.state);
+        this.setState({ artists: res, selectedGenre, selectedBreadcrumb: 'artists' });
+      })
+      .catch(err => {
+        alert(err);
+      });
+  }
+
+  selectArtist(event, index) {
+    event.preventDefault();
+    const { artists } = this.state;
+    const selectedArtist = artists[index];
+
+    fetch(`http://localhost:3000/albums/for/artist?artist=${selectedArtist}`)
+      .then(res => res.json())
+      .then(res => {
+        this.setState({ albums: res, selectedArtist, selectedBreadcrumb: 'albums' });
+      })
+      .catch(err => {
+        alert(err);
+      });
+  }
+
+  selectAlbum(event, index) {
+    event.preventDefault();
+    const { albums } = this.state;
+    const selectedAlbum = albums[index];
+
+    fetch(`http://localhost:3000/songs/for/album?album=${selectedAlbum}`)
+      .then(res => res.json())
+      .then(res => {
+        this.setState({ songs: res, selectedAlbum, selectedBreadcrumb: 'songs' });
+      })
+      .catch(err => {
+        alert(err);
+      });
+  }
+
+  selectSong(event, index) {
+    event.preventDefault();
+    const { songs } = this.state;
+    const selectedSong = songs[index];
+
+    fetch(`http://localhost:3000/song?song=${selectedSong}`)
+      .then(res => res.json())
+      .then(res => {
+        console.log(res);
+        this.setState({ songUrl: res.url, selectedSongIndex: index }, () => {
+          this.refs.audio.pause();
+          this.refs.audio.load();
+          this.refs.audio.play();
+        });
       })
       .catch(err => {
         alert(err);
@@ -124,35 +154,15 @@ class LoggedIn extends Component {
       case('genres'):
         return this.renderGenres();
       case('artists'):
-        break;
+        return this.renderArtists();
       case('albums'):
-        break;
+        return this.renderAlbums();
       case('songs'):
-        break;
+        return this.renderSongs();
       default:
         return this.renderGenres();
     }
   }
-
-  renderList() {
-    const { songs, selectedSongIndex } = this.state;
-    const selectSong = this.selectSong;
-    return (
-      <tbody>
-        {songs.map((s, index) => {
-          return (
-            <tr key={index}>
-              <td>{songs[index].genre}</td>
-              <td>{songs[index].artist}</td>
-              <td>{songs[index].album}</td>
-              <td>{songs[index].song}</td>
-              <td><Button variant={selectedSongIndex === index ? "info" : "outline-info"} onClick={(event) => selectSong(event, index)}><FontAwesomeIcon icon={faPlay} /></Button></td>
-            </tr>
-          )
-        })}
-      </tbody>
-    );
-  };
 
   renderGenres() {
     const { genres } = this.state;
@@ -160,6 +170,11 @@ class LoggedIn extends Component {
 
     return (
       <Table striped bordered hover variant="dark">
+        <thead>
+          <tr>
+            <th>Genre</th>
+          </tr>
+        </thead>
         <tbody>
           {genres.map((genre, index) => {
           return (
@@ -170,19 +185,93 @@ class LoggedIn extends Component {
           })}
         </tbody>
       </Table>
-      );
+    );
+  };
+
+  renderArtists() {
+    const { artists } = this.state;
+    const selectArtist = this.selectArtist;
+
+    return (
+      <Table striped bordered hover variant="dark">
+        <thead>
+          <tr>
+            <th>Artist</th>
+          </tr>
+        </thead>
+        <tbody>
+          {artists.map((artist, index) => {
+          return (
+            <tr key={index}>
+              <td><Button variant="info" onClick={(event) => selectArtist(event, index)}>{artist}</Button></td>
+            </tr>
+          )
+          })}
+        </tbody>
+      </Table>
+    );
+  };
+
+  renderAlbums() {
+    const { albums } = this.state;
+    const selectAlbum = this.selectAlbum;
+
+    return (
+      <Table striped bordered hover variant="dark">
+        <thead>
+          <tr>
+            <th>Album</th>
+          </tr>
+        </thead>
+        <tbody>
+          {albums.map((album, index) => {
+          return (
+            <tr key={index}>
+              <td><Button variant="info" onClick={(event) => selectAlbum(event, index)}>{album}</Button></td>
+            </tr>
+          )
+          })}
+        </tbody>
+      </Table>
+    );
+  };
+
+  renderSongs() {
+    const { songs, selectedSongIndex } = this.state;
+    const selectSong = this.selectSong;
+
+    return (
+      <Table striped bordered hover variant="dark">
+        <thead>
+          <tr>
+            <th>Song</th>
+            <th>Play That Funky Moosic</th>
+          </tr>
+        </thead>
+        <tbody>
+          {songs.map((song, index) => {
+          return (
+            <tr key={index}>
+              <td>{song}</td>
+              <td><Button variant={selectedSongIndex === index ? "info" : "outline-info"} onClick={(event) => selectSong(event, index)}><FontAwesomeIcon icon={faPlay} /></Button></td>
+            </tr>
+          )
+          })}
+        </tbody>
+      </Table>
+    );
   };
 
   renderBreadcrumbs() {
-    const { genres, artists, albums, songs } = this.state;
+    const { genres, artists, albums, songs, selectedBreadcrumb } = this.state;
     const selectBreadcrumb = this.selectBreadcrumb;
 
     return (
       <Breadcrumb>
-        { genres ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'genres')}>Genres</Breadcrumb.Item> : null }
-        { artists ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'artists')}>Artists</Breadcrumb.Item> : null }
-        { albums ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'albums')}>Albums</Breadcrumb.Item> : null }
-        { songs ? <Breadcrumb.Item>Songs</Breadcrumb.Item> : null }
+        { genres && includes(['genres', 'artists', 'albums', 'songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'genres')}>Genres</Breadcrumb.Item> : null }
+        { artists && includes(['artists', 'albums', 'songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'artists')}>Artists</Breadcrumb.Item> : null }
+        { albums && includes(['albums', 'songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'albums')}>Albums</Breadcrumb.Item> : null }
+        { songs && includes(['songs'], selectedBreadcrumb) ? <Breadcrumb.Item onClick={(event) => selectBreadcrumb(event, 'songs')}>Songs</Breadcrumb.Item> : null }
       </Breadcrumb>
     )
   }
@@ -198,10 +287,10 @@ class LoggedIn extends Component {
   }
 
   render() {
-    const { songUrl, genres, artists, albums, songs } = this.state;
     return (
       <div>
-        { songUrl ? this.renderAudio() : null }
+        <Button variant="info" onClick={this.logOut}>Log Out</Button>
+        { this.state.songUrl ? this.renderAudio() : null }
         { this.state.isLoaded ? this.renderBreadcrumbs() : null }
         { this.state.isLoaded ? this.renderData() : null }
       </div>
