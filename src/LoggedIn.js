@@ -55,13 +55,13 @@ class LoggedIn extends Component {
       })
     };
 
-    fetch('http://localhost:3000/save-user', params)
+    fetch('http://50.16.111.234:3000/save-user', params)
       .then(res => res.json())
       .catch(err => {
         alert(err);
       });
 
-    fetch('http://localhost:3000/genres')
+    fetch('http://50.16.111.234:3000/genres')
       .then(res => {
         return res.json();
       })
@@ -90,7 +90,7 @@ class LoggedIn extends Component {
     const { genres } = this.state;
     const selectedGenre = genres[index];
 
-    fetch(`http://localhost:3000/artists/for/genre?genre=${selectedGenre}`)
+    fetch(`http://50.16.111.234:3000/artists/for/genre?genre=${selectedGenre}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ artists: res, selectedGenre, selectedBreadcrumb: ARTISTS });
@@ -105,7 +105,7 @@ class LoggedIn extends Component {
     const { artists } = this.state;
     const selectedArtist = artists[index];
 
-    fetch(`http://localhost:3000/albums/for/artist?artist=${selectedArtist}`)
+    fetch(`http://50.16.111.234:3000/albums/for/artist?artist=${selectedArtist}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ albums: res, selectedArtist, selectedBreadcrumb: ALBUMS });
@@ -120,7 +120,7 @@ class LoggedIn extends Component {
     const { albums } = this.state;
     const selectedAlbum = albums[index];
 
-    fetch(`http://localhost:3000/songs/for/album?album=${selectedAlbum}`)
+    fetch(`http://50.16.111.234:3000/songs/for/album?album=${selectedAlbum}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ songs: res, selectedAlbum, selectedBreadcrumb: SONGS });
@@ -135,10 +135,9 @@ class LoggedIn extends Component {
     const { songs } = this.state;
     const selectedSong = songs[index];
 
-    fetch(`http://localhost:3000/song?song=${selectedSong}`)
+    fetch(`http://50.16.111.234:3000/song?song=${selectedSong}`)
       .then(res => res.json())
       .then(res => {
-        console.log(res);
         this.setState({ songUrl: res.url, selectedSongIndex: index }, () => {
           this.refs.audio.pause();
           this.refs.audio.load();
