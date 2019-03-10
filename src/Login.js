@@ -32,7 +32,7 @@ class Login extends Component {
   render() {
     return (
       <div className="container">
-      <div className="jumbotron vertical-center">
+      <div className="jumbotron vertical-horizontal-center">
         <div className="text-center">
           <p>Log In</p>
         </div>

@@ -297,7 +297,7 @@ class LoggedIn extends Component {
   renderAudio() {
     const { songUrl } = this.state;
     return (
-      <audio controls autoPlay ref="audio">
+      <audio controls autoPlay ref="audio" id="audio">
         <source src={songUrl} type="audio/mp4"></source>
         Your browser does not support the audio element.
       </audio>
