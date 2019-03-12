@@ -11,6 +11,7 @@ const GENRES = 'genres';
 const ARTISTS = 'artists';
 const ALBUMS = 'albums';
 const SONGS = 'songs';
+const API_HOST = 'http://52.204.177.118:3000';
 
 class LoggedIn extends Component {
   constructor(props) {
@@ -37,6 +38,7 @@ class LoggedIn extends Component {
     this.logOut = this.logOut.bind(this);
     this.selectBreadcrumb = this.selectBreadcrumb.bind(this);
     this.renderBreadcrumbs = this.renderBreadcrumbs.bind(this);
+    this.sendSqsMessage = this.sendSqsMessage.bind(this);
   }
 
   componentDidMount() {
@@ -55,13 +57,13 @@ class LoggedIn extends Component {
       })
     };
 
-    fetch('http://50.16.111.234:3000/save-user', params)
+    fetch(`${API_HOST}/save-user`, params)
       .then(res => res.json())
       .catch(err => {
         alert(err);
       });
 
-    fetch('http://50.16.111.234:3000/genres')
+    fetch(`${API_HOST}/genres`)
       .then(res => {
         return res.json();
       })
@@ -90,7 +92,7 @@ class LoggedIn extends Component {
     const { genres } = this.state;
     const selectedGenre = genres[index];
 
-    fetch(`http://50.16.111.234:3000/artists/for/genre?genre=${selectedGenre}`)
+    fetch(`${API_HOST}/artists/for/genre?genre=${selectedGenre}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ artists: res, selectedGenre, selectedBreadcrumb: ARTISTS });
@@ -105,7 +107,7 @@ class LoggedIn extends Component {
     const { artists } = this.state;
     const selectedArtist = artists[index];
 
-    fetch(`http://50.16.111.234:3000/albums/for/artist?artist=${selectedArtist}`)
+    fetch(`${API_HOST}/albums/for/artist?artist=${selectedArtist}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ albums: res, selectedArtist, selectedBreadcrumb: ALBUMS });
@@ -120,7 +122,7 @@ class LoggedIn extends Component {
     const { albums } = this.state;
     const selectedAlbum = albums[index];
 
-    fetch(`http://50.16.111.234:3000/songs/for/album?album=${selectedAlbum}`)
+    fetch(`${API_HOST}/songs/for/album?album=${selectedAlbum}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ songs: res, selectedAlbum, selectedBreadcrumb: SONGS });
@@ -135,7 +137,7 @@ class LoggedIn extends Component {
     const { songs } = this.state;
     const selectedSong = songs[index];
 
-    fetch(`http://50.16.111.234:3000/song?song=${selectedSong}`)
+    fetch(`${API_HOST}/song?song=${selectedSong}`)
       .then(res => res.json())
       .then(res => {
         this.setState({ songUrl: res.url, selectedSongIndex: index }, () => {
@@ -152,6 +154,30 @@ class LoggedIn extends Component {
   selectBreadcrumb(event, breadcrumb) {
     event.preventDefault();
     this.setState({ selectedBreadcrumb: breadcrumb });
+  }
+
+  sendSqsMessage(event) {
+    event.preventDefault();
+    const { songs, selectedArtist, selectedAlbum, selectedSongIndex } = this.state;
+    const params = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        artist: selectedArtist,
+        album: selectedAlbum,
+        song: songs[selectedSongIndex]
+      })
+    };
+
+    fetch(`${API_HOST}/play`, params)
+      .then(res => res.text())
+      .then(res => console.log(res))
+      .catch(err => {
+        alert(err);
+      });
   }
 
   renderData() {
@@ -296,8 +322,9 @@ class LoggedIn extends Component {
 
   renderAudio() {
     const { songUrl } = this.state;
+    const sendSqsMessage = this.sendSqsMessage;
     return (
-      <audio controls autoPlay ref="audio" id="audio">
+      <audio controls autoPlay ref="audio" id="audio" onPlay={sendSqsMessage}>
         <source src={songUrl} type="audio/mp4"></source>
         Your browser does not support the audio element.
       </audio>
